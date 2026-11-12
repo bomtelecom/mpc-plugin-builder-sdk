@@ -35,6 +35,7 @@ python3 tools/mpc_remote.py <ip> add plugins/<Name>      # an SDK project (its b
 python3 tools/mpc_remote.py <ip> add some-plugin.zip     # ... or a zip from the package tool / a download
 python3 tools/mpc_remote.py <ip> update plugins/<Name>   # replace an installed copy, no question asked
 python3 tools/mpc_remote.py <ip> import <release>.zip [<aarch64>.zip] --out converted --zip   # convert a community mpc-vst-plugins package (needs no hacked MPC OS), save it, then add it
+python3 tools/catalog_fetch.py convert --gen2-verified --arch aarch64 --out converted   # fetch + verify + convert from the OpenMPC catalog (no MPC needed); then: add converted
 python3 tools/mpc_remote.py <ip> remove "<folder or name>" --yes
 python3 tools/mpc_remote.py <ip> export <name> | --all --out <dir>    # always written as zip files
 ```
@@ -53,6 +54,8 @@ Add `--no-color` when output is captured. Exit codes: 0 ok, 1 an operation faile
 ## Restarting the MPC app
 
 `import` takes zips or folders from the community plugin store (https://sd88me.github.io/mpc-vst-plugins/, made for a modified MPC OS) and rewrites them into the SDK folder format with `tools/legacy_convert.py` (also usable alone, no MPC needed). Give the armv7 and aarch64 zips of one plugin together to get one folder that works on every model. The converted folder (and a zip with `--zip`) is saved to `--out` for redistribution, and installing it asks the same questions as `add`. The plugin binaries are not modified; mention the plugin's licence (recorded in `plugin.json`) before redistributing, and that a plugin written for the modified OS may rely on features the stock host lacks, so test it.
+
+To work from the catalog itself (https://open-mpc.github.io/, the store's current address), use `tools/catalog_fetch.py` (no MPC needed): `list [--gen2-verified] [--arch aarch64|armv7] [--md FILE]` shows what can be converted (addins are never offered: they are code preloaded into the MPC app, which this SDK does not install), and `convert <id>... | --gen2-verified --arch aarch64|armv7 --out converted [--cache zips]` downloads each release zip from the catalog URL, checks its size and SHA-256 against the catalog, never runs its install.sh, and converts it with `legacy_convert.py`. Then `add converted --drive <d>`. `--gen2-verified` means the catalog records a test on a Gen2 MPC with the community installer, not through the VST2 Plugins folder, so tell the user to try each one. Pass on every `NEEDS:` line (ROM or OS files the user must supply themselves; never fetch those for them).
 
 `restart` restarts the MPC application service (`acvs`) so it rescans VST2 plugins; it needs no drive. **Any unsaved project data on the MPC is lost**, so never run it (or pass `--yes`) without the user explicitly agreeing, and remind them to save first. Suggest it after every install or update, since the MPC only rescans VSTs at startup; it is not needed after `list`, `export` or other read-only commands.
 
